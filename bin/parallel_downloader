@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+require "parallel_downloader"
+
+Dir["./lib/**/*.rb"].each { |file| require file }
+
+FILENAME = ARGV[0].freeze
+SEPARATOR = ARGV[1].freeze
+NUMBER_OF_PROCESSES = ARGV[2].freeze
+FORCEFUL = ARGV[3].freeze
+
+logger = File.new("downloader.log", "a")
+startTime = Time.now
+begin
+  downloader = ParallelDownloader.new(FILENAME,
+                                      SEPARATOR,
+                                      NUMBER_OF_PROCESSES,
+                                      FORCEFUL,
+                                      logger)
+
+  downloader.exec
+
+  rescue ParallelDownloader::Errors::FileExtensionNotImplemented => e
+    match = ARGV[0].match(/\.(.*)/)
+    if match != nil
+      puts "Extension not implemented for #{match[1]}"
+    else
+      puts "Extension not implemented for unknown extension"
+    end
+
+  rescue ParallelDownloader::Errors::EmptyFile => e
+    puts "Given file is empty! Aborting!"
+
+  rescue ParallelDownloader::Errors::UnreadableFile => e
+    puts "Given file is unreadable/corrupted! Aborting!"
+  ensure
+    if logger != nil
+      logger.write("END: Downloading session ended at #{Time.now} \n")
+      logger.write("END: Took #{Time.now - startTime} seconds \n")
+      logger.close
+
+      puts "Done!"
+    end
+end

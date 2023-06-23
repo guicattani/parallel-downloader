@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+source "https://rubygems.org"
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
+
+ruby "3.2.2"
+
+gem "httparty"
+gem "parallel"
+gem "ruby-progressbar"
+
+group :development, :test do
+  gem "debug", platforms: %i[ mri mingw x64_mingw ]
+  gem "rubocop-github", require: false
+  gem "rubocop-performance", require: false
+end
+
+group :development do
+  gem "guard-rspec", require: false
+end
+
+group :test do
+  gem "rspec"
+  gem "simplecov"
+  gem "vcr"
+  gem "webmock"
+end
