@@ -1,4 +1,3 @@
-# rubocop:disable RSpec/MessageSpies
 # frozen_string_literal: true
 
 require "spec_helper"
@@ -67,7 +66,6 @@ RSpec.describe ParallelDownloader do
       Dir["#{Dir.pwd}/**.png"].each do |file|
         File.delete(file)
       end
-
     end
   end
 
@@ -85,9 +83,6 @@ RSpec.describe ParallelDownloader do
       Dir["#{Dir.pwd}/**.png"].each do |file|
         File.delete(file)
       end
-
     end
   end
 end
-
-# rubocop:enable RSpec/MessageSpies

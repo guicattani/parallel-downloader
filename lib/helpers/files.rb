@@ -14,7 +14,7 @@ class ParallelDownloader
     end
 
     def self.get_file_extension_from_url(path)
-      match = path.match(%r/\/.*\.(.*)\z/)
+      match = path.match(%r{/.*\.(.*)\z})
       return match[1] if match
 
       raise ParallelDownloader::Errors::FileNotFound

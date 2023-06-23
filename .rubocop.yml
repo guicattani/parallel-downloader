@@ -138,3 +138,6 @@ RSpec/MultipleMemoizedHelpers:
 
 RSpec/MultipleExpectations:
   Max: 3
+
+RSpec/FilePath:
+  Enabled: false

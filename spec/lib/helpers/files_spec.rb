@@ -1,4 +1,3 @@
-# rubocop:disable RSpec/MessageSpies
 # frozen_string_literal: true
 
 require "spec_helper"
@@ -11,6 +10,7 @@ RSpec.describe ParallelDownloader::Helpers do
       ).to eq("#{Dir.pwd}/spec/fixtures/test comma.txt")
     end
   end
+
   describe '#get_file_name_from_url' do
     it 'returns the filename from an url' do
       expect(
@@ -19,11 +19,12 @@ RSpec.describe ParallelDownloader::Helpers do
     end
 
     it 'raises ParallelDownloader::Errors::FileNotFound if file not found' do
-      expect{
+      expect do
         described_class.get_file_name_from_url('www.test.com')
-      }.to raise_error(ParallelDownloader::Errors::FileNotFound)
+      end.to raise_error(ParallelDownloader::Errors::FileNotFound)
     end
   end
+
   describe '#get_file_extension_from_url' do
     it 'returns the filename from an url' do
       expect(
@@ -32,11 +33,12 @@ RSpec.describe ParallelDownloader::Helpers do
     end
 
     it 'raises ParallelDownloader::Errors::FileNotFound if file not found' do
-      expect{
+      expect do
         described_class.get_file_extension_from_url('www.test.com/image')
-      }.to raise_error(ParallelDownloader::Errors::FileNotFound)
+      end.to raise_error(ParallelDownloader::Errors::FileNotFound)
     end
   end
+
   describe '#get_file_extension' do
     it 'returns the filename from a file' do
       expect(
@@ -45,9 +47,9 @@ RSpec.describe ParallelDownloader::Helpers do
     end
 
     it 'raises ParallelDownloader::Errors::FileNotFound if file not found' do
-      expect{
+      expect do
         described_class.get_file_extension('image')
-      }.to raise_error(ParallelDownloader::Errors::FileNotFound)
+      end.to raise_error(ParallelDownloader::Errors::FileNotFound)
     end
   end
 end
