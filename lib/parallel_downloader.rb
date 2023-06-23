@@ -56,6 +56,9 @@ class ParallelDownloader
       end
     end
     log_request(request, download_file_name, url)
+
+  rescue Errno::ENOENT
+    log_request(request, download_file_name, url)
   end
 
   def valid_extension?(extension)
