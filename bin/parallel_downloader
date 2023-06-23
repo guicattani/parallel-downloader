@@ -1,24 +1,48 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 require "parallel_downloader"
+require "optparse"
 
 Dir["./lib/**/*.rb"].each { |file| require file }
 
-FILENAME = ARGV[0].freeze
-SEPARATOR = ARGV[1].freeze
-NUMBER_OF_PROCESSES = ARGV[2].freeze
-FORCEFUL = ARGV[3].freeze
+options = {}
+OptionParser.new do |opts|
 
-logger = File.new("downloader.log", "a")
-startTime = Time.now
+  opts.banner = "Usage: parallel_downloader [filename] [options]"
+
+  opts.separator ""
+  opts.separator "Specific options:"
+
+  opts.on("-s", "--separator [SEPARATOR]", String, "Separator in given file") do |s|
+    options[:separator] = s
+  end
+
+  opts.on("-n", "--number-of-processes [NUM]", Integer, "Number of Parallel Processes") do |p|
+    options[:number_of_processes] = p
+  end
+
+  opts.on("-f", "--force", "Override extension allow list and download files with no extension") do
+    options[:forceful] = true
+  end
+
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+
+end.parse!(ARGV)
+
 begin
-  downloader = ParallelDownloader.new(FILENAME,
-                                      SEPARATOR,
-                                      NUMBER_OF_PROCESSES,
-                                      FORCEFUL,
-                                      logger)
+  logger = File.new("downloader.log", "a")
+  startTime = Time.now
 
+  raise ParallelDownloader::Errors::InsufficientArguments if ARGV[0].nil?
+  file_name = ARGV[0]
+
+  downloader = ParallelDownloader.new(file_name, logger, options)
   downloader.exec
+
+  puts "Done!"
 
   rescue ParallelDownloader::Errors::FileExtensionNotImplemented => e
     match = ARGV[0].match(/\.(.*)/)
@@ -29,16 +53,19 @@ begin
     end
 
   rescue ParallelDownloader::Errors::EmptyFile => e
-    puts "Given file is empty! Aborting!"
-
+    puts "ERROR: Given file is empty! Aborting!"
+  rescue ParallelDownloader::Errors::FileNotFound => e
+    puts "ERROR: File was not found! Aborting!"
   rescue ParallelDownloader::Errors::UnreadableFile => e
-    puts "Given file is unreadable/corrupted! Aborting!"
+    puts "ERROR: Given file is unreadable/corrupted! Aborting!"
+  rescue ParallelDownloader::Errors::InsufficientArguments => e
+    puts "ERROR: Insufficient arguments. Aborting!"
+  rescue RuntimeError => e
+    puts "ERROR: Unknown error: #{e}. Aborting!"
   ensure
     if logger != nil
       logger.write("END: Downloading session ended at #{Time.now} \n")
       logger.write("END: Took #{Time.now - startTime} seconds \n")
       logger.close
-
-      puts "Done!"
     end
 end

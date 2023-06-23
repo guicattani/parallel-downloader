@@ -1,16 +1,18 @@
 # frozen_string_literal: true
+
 require "parallel"
 require "httparty"
 
 class ParallelDownloader
-  attr_accessor :log
+  attr_reader :file_name, :extension, :logger, :separator, :number_of_processes, :forceful
 
-  def initialize(file_name, separator = " ", number_of_processes = 3, forceful = false, log)
-    @file_name = file_name
-    @separator = separator
-    @number_of_processes = number_of_processes
-    @forceful = forceful
-    @log = log
+  def initialize(file_name, logger, args = {})
+    @file_name           = file_name
+    @extension           = ParallelDownloader::Helpers.get_file_extension(file_name)
+    @logger              = logger
+    @separator           = args[:separator]           || " "
+    @number_of_processes = args[:number_of_processes] || 3
+    @forceful            = args[:forceful]            || false
   end
 
   def exec
@@ -18,7 +20,8 @@ class ParallelDownloader
       @file_name = ParallelDownloader::Helpers.relative_path_to_absolute(@file_name)
     end
 
-    if @file_name.end_with?(".txt")
+    case @extension
+    when 'txt'
       urls = ParallelDownloader::FileReader::Txt.read(@file_name, @separator)
     else
       raise ParallelDownloader::Errors::FileExtensionNotImplemented
@@ -34,16 +37,15 @@ class ParallelDownloader
   private
 
   def download(url)
-    file_name = ParallelDownloader::Helpers.get_file_name_from_url(url).freeze
+    download_file_name = ParallelDownloader::Helpers.get_file_name_from_url(url).freeze
     extension = ParallelDownloader::Helpers.get_file_extension_from_url(url).freeze
 
-    if (extension && (@forceful || ParallelDownloader::Extensions.allowed.include?(extension)))
-      file_path = "#{Dir.pwd}/#{file_name}.#{extension}"
-    elsif (@forceful)
-      file_path = "#{Dir.pwd}/#{file_name}"
-    else
-      return @log.write("ERROR! Skipping #{file_name} from baseurl: #{url}\
-BECAUSE EXTENSION IS FORBIDDEN\n")
+    file_path = file_path_from_extension(download_file_name, extension)
+    if file_path.nil?
+      @logger.write(
+        "ERROR: Skipped #{download_file_name} from baseurl: #{url} BECAUSE EXTENSION IS FORBIDDEN\n"
+      )
+      return
     end
 
     request = nil
@@ -53,15 +55,32 @@ BECAUSE EXTENSION IS FORBIDDEN\n")
         file.write(fragment)
       end
     end
-
-    if request && request.success?
-      @log.write("SUCCESS: Wrote #{file_name} from baseurl: #{url}\n")
-    elsif !extension
-      @log.write("WARNING! Wrote #{file_name} from baseurl: #{url}\
-BUT FILE HAS NO EXTENSION\n")
-    else
-      @log.write("ERROR! Failed to write #{file_name} from baseurl: #{url}\n")
-    end
+    log_request(request, download_file_name, url)
   end
 
+  def valid_extension?(extension)
+    @forceful || ParallelDownloader::Extensions.allowed.include?(extension)
+  end
+
+  def file_path_from_extension(download_file_name, extension)
+    file_path = nil
+    if extension && valid_extension?(extension)
+      file_path = "#{Dir.pwd}/#{download_file_name}.#{extension}"
+    elsif @forceful
+      file_path = "#{Dir.pwd}/#{download_file_name}"
+    end
+
+    file_path
+  end
+
+  def log_request(request, download_file_name, url)
+    if request&.success?
+      @logger.write("SUCCESS: Wrote #{download_file_name} from baseurl: #{url}\n")
+    elsif !extension
+      @logger.write("WARNING: Wrote #{download_file_name} from baseurl: #{url} \
+BUT FILE HAS NO EXTENSION\n")
+    else
+      @logger.write("ERROR: Failed to write #{download_file_name} from baseurl: #{url}\n")
+    end
+  end
 end
