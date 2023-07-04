@@ -1,9 +1,15 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-require "parallel_downloader"
-require "optparse"
 
-Dir["./lib/**/*.rb"].each { |file| require file }
+base_path = File.expand_path("../lib", __dir__)
+
+if File.exist?(base_path)
+  require_relative "../lib/parallel_downloader"
+else
+  require "parallel_downloader"
+end
+
+require "optparse"
 
 options = {}
 OptionParser.new do |opts|

@@ -2,6 +2,10 @@
 
 require "parallel"
 require "httparty"
+require_relative "errors"
+require_relative "extensions"
+require_relative "helpers"
+require_relative "file_readers"
 
 class ParallelDownloader
   attr_reader :file_name, :extension, :logger, :separator, :number_of_processes, :forceful
